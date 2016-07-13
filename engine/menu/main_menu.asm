@@ -141,32 +141,33 @@ LinkMenu:
 	call SaveScreenTilesToBuffer1
 	ld hl, WhereWouldYouLikeText
 	call PrintText
-	coord hl, 5, 5
-	ld b, $6
+	coord hl, 5, 3
+	ld b, $8
 	ld c, $d
 	call TextBoxBorder
 	call UpdateSprites
-	coord hl, 7, 7
+	coord hl, 7, 5
 	ld de, CableClubOptionsText
 	call PlaceString
 	xor a
 	ld [wUnusedCD37], a
 	ld [wd72d], a
 	ld hl, wTopMenuItemY
-	ld a, $7
-	ld [hli], a
+	ld a, $5
+	ld [hli], a ; wTopMenuItemY
 	ld a, $6
-	ld [hli], a
+	ld [hli], a ; wTopMenuItemX
 	xor a
-	ld [hli], a
+	ld [hli], a ; wCurrentMenuItem = 0
 	inc hl
-	ld a, $2
-	ld [hli], a
-	inc a
+	ld a, $3
+	ld [hli], a ; wMaxMenuItem
+  ; This should be 3, retards...
+	;inc a
 	; ld a, A_BUTTON | B_BUTTON
 	ld [hli], a ; wMenuWatchedKeys
 	xor a
-	ld [hl], a
+	ld [hl], a ; wLastMenuItem
 .waitForInputLoop
 	call HandleMenuInput
 	and A_BUTTON | B_BUTTON
@@ -230,7 +231,7 @@ LinkMenu:
 	jr nz, .updateCursorPosition
 ; A button was pressed
 	ld a, [wCurrentMenuItem]
-	cp $2
+	cp $3
 	jr z, .updateCursorPosition
 	ld c, d
 	ld d, b
@@ -252,15 +253,31 @@ LinkMenu:
 	and (B_BUTTON << 2) ; was B button pressed?
 	jr nz, .choseCancel ; cancel if B pressed
 	ld a, [wCurrentMenuItem]
-	cp $2
+	cp $3
 	jr z, .choseCancel
 	xor a
 	ld [wWalkBikeSurfState], a ; start walking
 	ld a, [wCurrentMenuItem]
-	and a
+	cp $0
 	ld a, COLOSSEUM
-	jr nz, .next
+	jr z, .next
+	ld a, [wCurrentMenuItem]
+	cp $1
 	ld a, TRADE_CENTER
+	jr z, .next
+.goFight
+  ld hl, wd72e
+  res 4, [hl]
+  ld a, ELECTABUZZ
+  ld [wCurOpponent], a
+  ld a, 20
+  ld [wCurEnemyLVL], a
+	xor a
+	ld [wMenuJoypadPollCount], a
+	call Delay3
+  call NewBattle
+  callab SaveSAVtoSRAM
+  jr .goFight
 .next
 	ld [wd72d], a
 	ld hl, PleaseWaitText
@@ -338,6 +355,7 @@ NewGameText:
 CableClubOptionsText:
 	db "TRADE CENTER", $4e
 	db "COLOSSEUM",    $4e
+	db "<pkmn> GO",    $4e
 	db "CANCEL@"
 
 DisplayContinueGameInfo:

@@ -251,10 +251,10 @@ LinkMenu:
 	call LoadScreenTilesFromBuffer1
 	ld a, [wLinkMenuSelectionSendBuffer]
 	and (B_BUTTON << 2) ; was B button pressed?
-	jr nz, .choseCancel ; cancel if B pressed
+	jp nz, .choseCancel ; cancel if B pressed
 	ld a, [wCurrentMenuItem]
 	cp $3
-	jr z, .choseCancel
+	jp z, .choseCancel
 	xor a
 	ld [wWalkBikeSurfState], a ; start walking
 	ld a, [wCurrentMenuItem]
@@ -266,15 +266,34 @@ LinkMenu:
 	ld a, TRADE_CENTER
 	jr z, .next
 .goFight
-  ld hl, wd72e
-  res 4, [hl]
-  ld a, ELECTABUZZ
-  ld [wCurOpponent], a
-  ld a, 20
-  ld [wCurEnemyLVL], a
 	xor a
 	ld [wMenuJoypadPollCount], a
 	call Delay3
+  ld a, $4 ; whatever
+	ld [wSerialExchangeNybbleSendData], a
+  call Serial_SyncAndExchangeNybble
+  ld hl, wSerialPlayerDataBlock
+  ld a, SERIAL_PREAMBLE_BYTE ; For syncing or sth
+  ld [hli], a
+  ld [hli], a
+  ld a, ELECTABUZZ
+  ld [hli], a
+  ld a, 20
+  ld [hl], a
+	ld hl, wSerialPlayerDataBlock
+	ld de, wSerialEnemyDataBlock
+	ld bc, $5
+	call Serial_ExchangeBytes
+
+  ld hl, wd72e
+  res 4, [hl]
+  ld hl, wd72d
+  res 4, [hl]
+  ld hl, wSerialEnemyDataBlock+3
+  ld a, [hli]
+  ld [wCurOpponent], a
+  ld a, [hl]
+  ld [wCurEnemyLVL], a
   call NewBattle
   callab SaveSAVtoSRAM
   jr .goFight

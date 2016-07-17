@@ -295,6 +295,12 @@ LinkMenu:
   ld a, [hl]
   ld [wCurEnemyLVL], a
   call NewBattle
+
+  ld hl, WildPkmMoney+2
+  ld de, wPlayerMoney+2
+  ld c, 3
+  predef AddBCDPredef
+
   callab SaveSAVtoSRAM
   jr .goFight
 .next
@@ -376,6 +382,9 @@ CableClubOptionsText:
 	db "COLOSSEUM",    $4e
 	db "<pkmn> GO",    $4e
 	db "CANCEL@"
+
+WildPkmMoney:
+  money 50
 
 DisplayContinueGameInfo:
 	xor a
